@@ -26,7 +26,7 @@ dbsession = Session()
 
 def get_user_data(user_id: str, password: str) -> str | None:
     got = dbsession.query(UserData).where(UserData.user_id == user_id).first()
-    if sha256(password).hexdigest() == got.password:
+    if sha256(password.encode()).hexdigest() == got.password:
         return got.data
     else:
         return None
@@ -36,9 +36,9 @@ def set_user_data(user_id: str, data: str, password: str) -> bool:
     got = dbsession.query(UserData).where(UserData.user_id == user_id).first()
     timespamp = int(datetime.datetime.now().timestamp())
     if not got:
-        new_data = UserData(user_id=user_id, data=data, password=sha256(password).hexdigest(), last_modified=timespamp)
+        new_data = UserData(user_id=user_id, data=data, password=sha256(password.encode()).hexdigest(), last_modified=timespamp)
     else:
-        if sha256(password).hexdigest() == got.password:
+        if sha256(password.encode()).hexdigest() == got.password:
             new_data = got
             new_data.data = data
             new_data.last_modified = timespamp
@@ -47,3 +47,19 @@ def set_user_data(user_id: str, data: str, password: str) -> bool:
     dbsession.add(new_data)
     dbsession.commit()
     return True
+
+
+def register_user(user_id: str, password: str) -> bool:
+    got = dbsession.query(UserData).where(UserData.user_id == user_id).first()
+    if not got:
+        set_user_data(user_id, "[]", password)
+        return True
+    return False
+
+
+def login_user(user_id: str, password: str) -> bool:
+    got = dbsession.query(UserData).where(UserData.user_id == user_id).first()
+    if not got:
+        return False
+
+    return got.password == sha256(password.encode()).hexdigest()

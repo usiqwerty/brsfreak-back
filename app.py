@@ -37,5 +37,29 @@ def set_user_data():
         return "Wrong password", 401
 
 
+@app.route('/register', methods=["POST"])
+@cross_origin(origins='*')
+def register():
+    userdata = json.loads(request.data.decode())
+    user_id = userdata['user_id']
+    password = userdata["pass"]
+    if storage.register_user(user_id, password):
+        return "Good"
+    else:
+        return "User exists", 401
+
+
+@app.route('/login', methods=["POST"])
+@cross_origin(origins='*')
+def login():
+    userdata = json.loads(request.data.decode())
+    user_id = userdata['user_id']
+    password = userdata["pass"]
+    if storage.login_user(user_id, password):
+        return "Good"
+    else:
+        return "Wrong password", 401
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0")
