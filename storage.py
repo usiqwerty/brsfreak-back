@@ -1,3 +1,4 @@
+import datetime
 from hashlib import sha256
 
 from sqlalchemy import create_engine
@@ -12,6 +13,7 @@ class UserData(Base):
     user_id: Mapped[str] = mapped_column(primary_key=True)
     data: Mapped[str]
     password: Mapped[str]
+    last_modified: Mapped[int]
 
 
 sqlite_database = "sqlite:///users.db"
@@ -32,12 +34,14 @@ def get_user_data(user_id: str, password: str) -> str | None:
 
 def set_user_data(user_id: str, data: str, password: str) -> bool:
     got = dbsession.query(UserData).where(UserData.user_id == user_id).first()
+    timespamp = int(datetime.datetime.now().timestamp())
     if not got:
-        new_data = UserData(user_id=user_id, data=data, password=sha256(password).hexdigest())
+        new_data = UserData(user_id=user_id, data=data, password=sha256(password).hexdigest(), last_modified=timespamp)
     else:
         if sha256(password).hexdigest() == got.password:
             new_data = got
             new_data.data = data
+            new_data.last_modified = timespamp
         else:
             return False
     dbsession.add(new_data)
